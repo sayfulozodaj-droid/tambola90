@@ -1,3 +1,7 @@
+# Render Blueprint — Tambola90
+# Ro'ha usul: Blueprint = Render avtomatik bazani ham yaratadi + service-ni ishga tushiradi.
+# Telegram: SMS Gateway (api.sms-gate.app) default qilib o'rnatilgan.
+
 services:
   - type: web
     name: tambola90-server
@@ -5,26 +9,35 @@ services:
     buildCommand: npm ci --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy
     startCommand: node dist/app.js
     healthCheckPath: /health
+
     envVars:
+      # Database — Render avtomatik yaratadi va connectionString ni quyidagi kalitga joylaydi
       - key: DATABASE_URL
         fromDatabase:
           name: tambola90-db
           property: connectionString
+
+      # JWT
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: "7d"
+
+      # SMS provider — SMS Gateway (api.sms-gate.app)
       - key: SMS_PROVIDER
         value: sms_gateway
       - key: SMS_GATEWAY_TOKEN
-        sync: false
+        value: jovidxon08012009
       - key: SMS_GATEWAY_URL
-        value: https://api.sms-gateway.tj/v1/send
-      - key: CORS_ORIGIN
-        value: "*"
+        value: https://api.sms-gate.app:443/api/v1/send-sms
+
+      # Boshqa
       - key: NODE_ENV
         value: production
+      - key: CORS_ORIGIN
+        value: "*"
 
 databases:
   - name: tambola90-db
     provider: postgres
+    plan: free
