@@ -15,7 +15,11 @@ services:
       - key: JWT_EXPIRES_IN
         value: "7d"
       - key: SMS_PROVIDER
-        value: stub
+        value: sms_gateway
+      - key: SMS_GATEWAY_TOKEN
+        sync: false
+      - key: SMS_GATEWAY_URL
+        value: https://api.sms-gateway.tj/v1/send
       - key: CORS_ORIGIN
         value: "*"
       - key: NODE_ENV

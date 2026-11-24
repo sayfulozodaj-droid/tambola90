@@ -4,13 +4,19 @@ export interface SmsSender {
   send(phone: string, message: string): Promise<void>;
 }
 
+const normalizePhone = (raw: string): string => raw.replace(/[^\d+]/g, "");
+
 /**
- * Агар SMS_PROVIDER=eskiz ва SMS_API_KEY мавҷуд бошад — тавассути Eskiz.uz фиристода мешавад,
- * дар акси ҳол код ба консол чоп мешавад (stub барои dev).
+ * Пешниҳодҳои дастгирӣ:
+ *   - "esmz"      → ESMZ (notify.eskiz.uz) — истифодаи SMS_API_KEY
+ *   - "sms_gateway" → SMS Gateway / сервери дохилӣ — истифодаи SMS_GATEWAY_TOKEN
+ *   - "stub"      → тана консол (барои dev/test)
  */
 export const smsSender: SmsSender = {
   async send(phone: string, message: string): Promise<void> {
-    if (env.smsProvider === "eskiz" && env.smsApiKey) {
+    const dest = normalizePhone(phone);
+
+    if (env.smsProvider === "esmz" && env.smsApiKey) {
       try {
         const res = await fetch("https://notify.eskiz.uz/api/message/sms/send", {
           method: "POST",
@@ -18,20 +24,48 @@ export const smsSender: SmsSender = {
             Authorization: `Bearer ${env.smsApiKey}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            mobile_phone: phone.replace(/[^\d]/g, ""),
-            message,
-          }),
+          body: JSON.stringify({ mobile_phone: dest, message }),
         });
         if (!res.ok) {
-          console.warn(`[sms] Eskiz хато: ${res.status}. Код ба консол чоп мешавад.`);
-          console.log(`[sms:stub] ${phone} → ${message}`);
+          console.warn(`[sms] ESMZ хато: ${res.status}. Код ба консол чоп мешавад.`);
+          console.log(`[sms:stub] ${dest} → ${message}`);
+        } else {
+          return;
         }
-        return;
       } catch (e) {
-        console.warn("[sms] Eskiz дастрас нест, stub истифода мешавад:", e);
+        console.warn("[sms] ESMZ дастрас нест, stub:", e);
       }
+      return;
     }
-    console.log(`[sms:stub] ${phone} → ${message}`);
+
+    if (env.smsProvider === "sms_gateway") {
+      try {
+        const res = await fetch(env.smsGatewayUrl!, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${env.smsGatewayToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ to: dest, message }),
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.warn(
+            `[sms] SMS Gateway хато ${res.status}: ${text.slice(0, 120)}`
+          );
+        } else {
+          console.log(`[sms] SMS Gateway: ${dest} OK ${res.status}`);
+          return;
+        }
+      } catch (e) {
+        console.warn("[sms] SMS Gateway error:", e);
+      }
+      // fallback — код бе фиристодан мемонад
+      console.log(`[sms:stub] ${dest} → ${message}`);
+      return;
+    }
+
+    // stub ё provider-и номаълум
+    console.log(`[sms:stub] ${dest} → ${message}`);
   },
 };

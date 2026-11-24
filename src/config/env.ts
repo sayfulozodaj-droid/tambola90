@@ -8,6 +8,8 @@ const env = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   smsApiKey: process.env.SMS_API_KEY ?? "",
   smsProvider: process.env.SMS_PROVIDER ?? "stub",
+  smsGatewayToken: process.env.SMS_GATEWAY_TOKEN ?? "",
+  smsGatewayUrl: process.env.SMS_GATEWAY_URL ?? "https://api.sms-gateway.tj/v1/send",
   port: Number(process.env.PORT ?? 3000),
   uploadPath: process.env.UPLOAD_PATH ?? "./uploads",
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
