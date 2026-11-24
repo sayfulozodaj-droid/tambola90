@@ -1,0 +1,141 @@
+// Prisma schema — Tambola90
+// База: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  phone       String   @unique
+  name        String
+  password    String
+  role        Role     @default(PLAYER)
+  balance     Decimal  @default(0) @db.Decimal(12, 2)
+  freeTickets Int      @default(0) // билетҳои ройгон (ҷоизаи сатри 1)
+  isBlocked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  tickets      Ticket[]
+  transactions Transaction[]
+  prizeWins    PrizeLog[]
+}
+
+enum Role {
+  PLAYER
+  ADMIN
+}
+
+model Game {
+  id            String     @id @default(uuid())
+  status        GameStatus @default(WAITING)
+  ticketPrice   Decimal    @db.Decimal(12, 2)
+  carryOverFund Decimal    @default(0) @db.Decimal(12, 2) // аз бозии гузашта
+  totalFund     Decimal    @default(0) @db.Decimal(12, 2) // carryOver + ҷамъи билетҳо
+  callerMode    CallerMode @default(AUTO)
+  autoInterval  Int        @default(10) // сония
+  currentNumber Int?
+  calledNumbers Int[]      @default([])
+  createdAt     DateTime   @default(now())
+  startedAt     DateTime?
+  endedAt       DateTime?
+
+  tickets   Ticket[]
+  prizeLogs PrizeLog[]
+}
+
+enum GameStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+}
+
+enum CallerMode {
+  AUTO
+  MANUAL
+}
+
+model Ticket {
+  id       String  @id @default(uuid())
+  gameId   String
+  userId   String
+  numbers  Json // { row1: [n,n,n,n,n], row2: [...], row3: [...] }
+  row1Done Boolean @default(false)
+  row2Done Boolean @default(false)
+  row3Done Boolean @default(false)
+
+  game   Game       @relation(fields: [gameId], references: [id])
+  user   User       @relation(fields: [userId], references: [id])
+  prizes PrizeLog[]
+}
+
+model PrizeLog {
+  id          String      @id @default(uuid())
+  gameId      String
+  ticketId    String
+  userId      String
+  round       Int // 1, 2, ё 3
+  prizeAmount Decimal     @db.Decimal(12, 2)
+  commission  Decimal     @default(0) @db.Decimal(12, 2) // 10%
+  status      PrizeStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  claimedAt   DateTime?
+  expiredAt   DateTime?
+
+  game   Game   @relation(fields: [gameId], references: [id])
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+enum PrizeStatus {
+  PENDING // интизори тасдиқ (30 сония)
+  CLAIMED // тасдиқ шуд
+  EXPIRED // вақт гузашт
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String
+  type        TransactionType
+  amount      Decimal           @db.Decimal(12, 2)
+  status      TransactionStatus @default(PENDING)
+  checkImage  String? // путь ба расми чек
+  note        String?
+  createdAt   DateTime          @default(now())
+  confirmedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+enum TransactionType {
+  DEPOSIT // пур кардан
+  PRIZE // бурд
+  TICKET_BUY // харид
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+model BankCard {
+  id          String  @id @default(uuid())
+  cardNumber  String
+  phoneNumber String
+  ownerName   String
+  isActive    Boolean @default(true)
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+}

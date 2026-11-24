@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: tambola90-server
+    runtime: node
+    buildCommand: npm ci --include=dev && npx prisma generate && npm run build && npx prisma migrate deploy
+    startCommand: node dist/app.js
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tambola90-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: "7d"
+      - key: SMS_PROVIDER
+        value: stub
+      - key: CORS_ORIGIN
+        value: "*"
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: tambola90-db
+    provider: postgres
