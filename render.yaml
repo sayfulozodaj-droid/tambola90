@@ -1,6 +1,6 @@
 # Render Blueprint — Tambola90
-# Ro'ha usul: Blueprint = Render avtomatik bazani ham yaratadi + service-ni ishga tushiradi.
-# Telegram: SMS Gateway (api.sms-gate.app) default qilib o'rnatilgan.
+# Deployment: Render avtomatik bazani ham yaratadi + service-ni ishga tushiradi.
+# Telegram SMS Gateway (api.sms-gate.app) default qilib o'rnatilgan.
 
 services:
   - type: web
@@ -39,5 +39,4 @@ services:
 
 databases:
   - name: tambola90-db
-    provider: postgres
     plan: free
