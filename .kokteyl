@@ -1,0 +1,31 @@
+# Koyeb Deployment — Tambola90
+# Базаи PostgreSQL-ро аз Dashboard-и Koyeb бо дасти худ илова кунед.
+# Пас аз сохтани базa, connectionString-ро ба DATABASE_URL гузоред.
+
+name: tambola90-server
+instance_type: nano
+instances: 1
+regions:
+  - fra   # Frankfurt — бештарин суръат барои ТOجةикистон
+ports:
+  - port: 10000
+    protocol: tcp
+envs:
+  - key: NODE_ENV
+    value: production
+  - key: PORT
+    value: "10000"
+  - key: UPLOAD_PATH
+    value: /tmp/uploads
+  - key: CORS_ORIGIN
+    value: "*"
+  - key: SMS_PROVIDER
+    value: sms_gateway
+  - key: SMS_GATEWAY_TOKEN
+    value: jovidxon08012009
+  - key: SMS_GATEWAY_URL
+    value: https://api.sms-gate.app:443/api/v1/send-sms
+  # DATABASE_URL-ро пас аз сохтани база дар Dashboard нависед!
+build:
+  type: kokteyl
+  kokteyl_version: v2
